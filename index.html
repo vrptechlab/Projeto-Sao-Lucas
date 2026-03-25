@@ -1,0 +1,782 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="theme-color" content="#ffffff">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <link rel="manifest" href="manifest.json">
+    <title>São Lucas • Processos</title>
+    
+    <!-- Fonts & Icons -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://code.iconify.design/iconify-icon/1.0.7/iconify-icon.min.js"></script>
+
+    <style>
+        :root {
+            --primary: #1b365d;
+            --primary-light: #2a528a;
+            --accent: #0076a3;
+            --bg-body: #f8fafc;
+            --glass-bg: rgba(255, 255, 255, 0.25);
+            --glass-border: rgba(255, 255, 255, 0.5);
+            --card-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.05);
+            --text-main: #020617; /* Deep midnight for maximum contrast */
+            --text-muted: #334155; /* Dark gray for secondary info */
+            --radius-lg: 28px;
+            --radius-md: 18px;
+            --font-display: 'Plus Jakarta Sans', sans-serif;
+            --font-body: 'Plus Jakarta Sans', sans-serif;
+            --safe-top: env(safe-area-inset-top);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: var(--font-body);
+            background: transparent;
+            color: var(--text-main);
+            min-height: 100vh;
+            overflow-x: hidden;
+            line-height: 1.5;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .proc-val {
+            font-weight: 700;
+            color: var(--text-main);
+            font-size: 16px;
+        }
+
+        /* --- Background Particles --- */
+        .bg-canvas {
+            position: fixed;
+            inset: 0;
+            z-index: -1;
+            background: url('.claude/bharath-kumar-ML95FigqyR0-unsplash.jpg') center / 100% 100% no-repeat;
+            filter: brightness(0.9);
+            animation: bgMotion 25s ease-in-out infinite;
+            image-rendering: -webkit-optimize-contrast;
+            image-rendering: crisp-edges;
+            backface-visibility: hidden;
+        }
+
+        @keyframes bgMotion {
+            0% { transform: scale(1.0) translate(0, 0); }
+            50% { transform: scale(1.05) translate(-0.4%, -0.2%); }
+            100% { transform: scale(1.0) translate(0, 0); }
+        }
+
+        /* Blobs removed for 100% background clarity */
+
+        /* --- Glassmorphism Core --- */
+        .glass {
+            background: var(--glass-bg);
+            backdrop-filter: blur(12px) saturate(160%);
+            -webkit-backdrop-filter: blur(12px) saturate(160%);
+            border: 1px solid var(--glass-border);
+            box-shadow: var(--card-shadow);
+            position: relative;
+            overflow: hidden;
+        }
+        .glass::after {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle at top left, rgba(255,255,255,0.15) 0%, transparent 40%);
+            pointer-events: none;
+        }
+
+        .view { display: none; min-height: 100vh; animation: fadeIn 0.6s cubic-bezier(0.16, 1, 0.3, 1); }
+        .view.active { display: block; }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* --- LOGIN --- */
+        #login {
+            display: none;
+            height: 100vh;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+            position: relative;
+            overflow: hidden;
+            background: transparent;
+        }
+        #login.active { display: flex; }
+
+        .login-card {
+            width: 100%;
+            max-width: 440px;
+            padding: 48px;
+            border-radius: var(--radius-lg);
+            text-align: center;
+            position: relative;
+            z-index: 1;
+        }
+
+        .proc-card h3 {
+            font-size: 19px;
+            font-weight: 700;
+            margin-bottom: 12px;
+            color: var(--primary);
+            letter-spacing: -0.01em;
+            line-height: 1.3;
+        }
+
+        .login-logo { width: 180px; margin-bottom: 24px; }
+        .login-card h1 {
+            font-family: var(--font-display);
+            font-size: 32px;
+            font-weight: 800;
+            color: var(--primary);
+            margin-bottom: 8px;
+            letter-spacing: -0.025em;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.05);
+        }
+        .login-card p { color: var(--text-muted); font-size: 0.95rem; margin-bottom: 32px; }
+
+        .form-group { text-align: left; margin-bottom: 20px; }
+        .form-group label { display: block; font-size: 0.75rem; font-weight: 700; color: var(--primary); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 8px; padding-left: 4px; }
+        
+        .input-container { position: relative; }
+        .input-container iconify-icon { position: absolute; left: 16px; top: 50%; transform: translateY(-50%); font-size: 1.25rem; color: var(--text-muted); transition: color 0.3s; }
+        .input-container input {
+            width: 100%;
+            padding: 16px 16px 16px 52px;
+            background: rgba(255,255,255,0.6);
+            border: 1.5px solid transparent;
+            border-radius: var(--radius-md);
+            font-size: 1rem;
+            font-family: var(--font-body);
+            transition: all 0.3s;
+            outline: none;
+        }
+        .input-container input:focus { border-color: var(--primary); background: white; box-shadow: 0 0 0 5px rgba(27, 54, 93, 0.08); }
+        .input-container input:focus + iconify-icon { color: var(--primary); }
+
+        .btn-entry {
+            width: 100%;
+            padding: 18px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: var(--radius-md);
+            font-size: 1rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            margin-top: 12px;
+            box-shadow: 0 10px 20px -5px rgba(27, 54, 93, 0.3);
+        }
+        .btn-entry:hover { transform: translateY(-3px); box-shadow: 0 15px 30px -10px rgba(27, 54, 93, 0.4); }
+        .btn-entry:active { transform: scale(0.97); }
+
+        /* --- DASHBOARD --- */
+        .app-nav {
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            padding: 32px 24px;
+            margin-bottom: 32px;
+            border-bottom: 1px solid rgba(255,255,255,0.3);
+        }
+
+        .nav-content { max-width: 1100px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; }
+        .nav-logo { height: 36px; cursor: pointer; }
+
+        .dashboard-main { max-width: 1100px; margin: 0 auto; padding: 0 24px 80px; }
+        
+        .hero-banner { margin-bottom: 20px; animation: fadeIn 0.8s ease; }
+        .hero-banner h2 { 
+            font-family: var(--font-display); 
+            font-size: 2rem; 
+            font-weight: 800; 
+            color: var(--primary); 
+            letter-spacing: -0.04em; 
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .hero-banner h2::before {
+            content: '';
+            display: inline-block;
+            width: 4px;
+            height: 32px;
+            background: var(--accent);
+            border-radius: 10px;
+        }
+        .hero-banner p { color: var(--text-muted); font-size: 1.1rem; max-width: 600px; }
+
+        .stats-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .stat-card {
+            padding: 12px 20px;
+            border-radius: var(--radius-lg);
+            border-bottom: 4px solid transparent;
+            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .stat-card:hover { transform: translateY(-8px) scale(1.02); }
+        .stat-card.blue { border-bottom-color: var(--accent); }
+        .stat-card.navy { border-bottom-color: var(--primary); }
+        .stat-card.green { border-bottom-color: #10b981; }
+        .stat-card.orange { border-bottom-color: #f59e0b; }
+
+        .stat-head { display: flex; align-items: center; gap: 12px; margin-bottom: 8px; }
+        .stat-icon-wrap { width: 44px; height: 44px; border-radius: 12px; background: white; display: flex; align-items: center; justify-content: center; font-size: 1.4rem; color: var(--primary); box-shadow: 0 8px 16px rgba(0,0,0,0.04); }
+        .stat-info .label { font-size: 0.75rem; font-weight: 700; text-transform: uppercase; color: var(--text-muted); letter-spacing: 0.05em; line-height: 1.2; }
+        .stat-val { font-family: var(--font-display); font-size: 1.6rem; font-weight: 800; color: var(--primary); margin-top: 2px; }
+
+        /* --- List --- */
+        .proc-card {
+            padding: 10px 16px;
+            border-radius: var(--radius-lg);
+            margin-bottom: 8px;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            position: relative;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.06);
+        }
+        .proc-card:hover { transform: translateY(-4px) scale(1.01); background: rgba(255,255,255,0.7); box-shadow: 0 12px 30px rgba(0,0,0,0.1); }
+        
+        .proc-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 0; }
+        .proc-num { font-size: 0.85rem; font-weight: 700; color: #b45309; letter-spacing: 0.02em; }
+        .proc-title { font-size: 1.15rem; font-weight: 700; color: var(--primary); margin-bottom: 2px; }
+        
+        .proc-meta-line { display: flex; flex-wrap: wrap; gap: 14px; margin-bottom: 2px; color: var(--text-muted); font-size: 0.8rem; font-weight: 500; }
+        .proc-meta-item { display: flex; align-items: center; gap: 6px; }
+        .proc-meta-item iconify-icon { font-size: 1.1rem; color: var(--primary); opacity: 0.6; }
+
+        .proc-tags { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 4px; padding-top: 2px; border-top: 1px solid rgba(0,0,0,0.05); }
+        .proc-tag { font-size: 0.65rem; font-weight: 800; text-transform: uppercase; color: var(--text-muted); letter-spacing: 0.05em; display: flex; gap: 4px; }
+        .proc-tag strong { color: var(--primary); opacity: 0.4; }
+
+        .proc-footer-mov { font-size: 0.75rem; color: var(--text-muted); font-weight: 500; padding: 6px 12px; background: rgba(0,0,0,0.03); border-radius: 10px; margin-top: 4px; line-height: 1.4; border-left: 3px solid var(--primary); }
+
+        .badge {
+            padding: 6px 14px;
+            border-radius: 100px;
+            font-size: 0.7rem;
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        @keyframes badgePulse {
+            0% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.6; transform: scale(0.96); }
+            100% { opacity: 1; transform: scale(1); }
+        }
+
+        .proc-card:hover .badge { animation: badgePulse 1.2s infinite ease-in-out; }
+
+        .badge-pericial { background: rgba(7, 89, 133, 0.1); color: #075985; border: 1px solid rgba(7, 89, 133, 0.2); }
+        .badge-extinto { background: rgba(153, 27, 27, 0.1); color: #991b1b; border: 1px solid rgba(153, 27, 27, 0.2); }
+        .badge-andamento { background: rgba(101, 163, 13, 0.1); color: #4d7c0f; border: 1px solid rgba(132, 204, 22, 0.2); }
+
+        /* --- DETAILS --- */
+        .detail-top { margin-bottom: 32px; }
+        .back-btn { display: inline-flex; align-items: center; gap: 8px; font-weight: 700; color: var(--primary); cursor: pointer; font-size: 0.9rem; margin-bottom: 24px; transition: opacity 0.2s; }
+        .back-btn:hover { opacity: 0.7; }
+
+        .detail-header-card { padding: 40px; border-radius: var(--radius-lg); margin-bottom: 32px; position: relative; overflow: hidden; }
+        .detail-header-card::before { content: ''; position: absolute; top: 0; left: 0; width: 6px; height: 100%; background: var(--primary); }
+
+        .meta-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 32px; }
+        .data-box { padding: 32px; border-radius: var(--radius-lg); }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: rgba(27, 54, 93, 0.2); border-radius: 10px; }
+
+        #login-error { color: #dc2626; font-weight: 700; font-size: 0.85rem; margin-top: 20px; display: none; }
+        #login-error.active { display: block; animation: shake 0.4s; }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+
+        @media (max-width: 768px) {
+            .app-nav { padding: 16px; margin-bottom: 20px; }
+            .nav-logo { height: 24px; }
+            
+            .hero-banner h2 { font-size: 1.5rem; }
+            .hero-banner h2::before { height: 20px; }
+            
+            .stats-container { grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
+            .stat-card { padding: 12px 10px; border-bottom-width: 3px; }
+            .stat-val { font-size: 1.1rem !important; }
+            
+            .proc-card { padding: 12px; }
+            .proc-title { font-size: 0.95rem; line-height: 1.3; }
+            .proc-meta-line { gap: 8px; font-size: 0.75rem; }
+            .proc-footer-mov { font-size: 0.7rem; padding: 4px 8px; }
+            
+            .dashboard-main { padding: 0 16px 40px; }
+            .login-card { padding: 32px 20px; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="bg-canvas"></div>
+
+<!-- LOGIN -->
+<div id="login" class="view active">
+    <div class="login-card glass">
+        <img src="https://saolucasprudente.com.br/wp-content/uploads/2025/07/marca_sao-lucas_horizontal_fundo_claro-1536x353.png" alt="São Lucas" class="login-logo">
+        <h1>Portal do Cliente</h1>
+        <p>Acompanhamento Jurídico em Tempo Real</p>
+        
+        <div class="form-group">
+            <label>Identificação</label>
+            <div class="input-container">
+                <iconify-icon icon="solar:user-circle-bold-duotone"></iconify-icon>
+                <input type="text" id="inp-user" placeholder="Digite seu usuário" autocomplete="username">
+            </div>
+        </div>
+        
+        <div class="form-group">
+            <label>Código de Acesso</label>
+            <div class="input-container">
+                <iconify-icon icon="solar:key-minimalistic-bold-duotone"></iconify-icon>
+                <input type="password" id="inp-pass" placeholder="••••••••" autocomplete="current-password">
+            </div>
+        </div>
+        
+        <button class="btn-entry" onclick="doLogin()">
+            Fazer Login
+            <iconify-icon icon="solar:arrow-right-up-bold-duotone"></iconify-icon>
+        </button>
+        
+        <div id="login-error">Credenciais inválidas. Tente novamente.</div>
+    </div>
+</div>
+
+<!-- DASHBOARD -->
+<div id="dashboard" class="view">
+    <header class="app-nav glass">
+        <div class="nav-content">
+            <img src="https://saolucasprudente.com.br/wp-content/uploads/2025/07/marca_sao-lucas_horizontal_fundo_claro-1536x353.png" alt="São Lucas" class="nav-logo" onclick="showDashboard()">
+            <button onclick="doLogout()" style="background: rgba(255,255,255,0.8); border: 1px solid rgba(27,54,93,0.1); padding: 8px 16px; border-radius: 100px; font-weight: 700; color: var(--primary); font-size: 0.85rem; cursor: pointer; display: flex; align-items: center; gap: 6px;">
+                <iconify-icon icon="solar:logout-3-bold-duotone" style="font-size: 1.1rem;"></iconify-icon>
+                Sair
+            </button>
+        </div>
+    </header>
+
+    <main class="dashboard-main">
+        <div class="hero-banner">
+            <h2 style="font-family: var(--font-display); font-size: 2.5rem; font-weight: 800; color: var(--primary); letter-spacing: -0.04em;">Processos</h2>
+        </div>
+        <div id="dash-content"></div>
+    </main>
+</div>
+
+<!-- DETAIL -->
+<div id="detail" class="view">
+    <header class="app-nav glass">
+        <div class="nav-content">
+            <img src="https://saolucasprudente.com.br/wp-content/uploads/2025/07/marca_sao-lucas_horizontal_fundo_claro-1536x353.png" alt="São Lucas" class="nav-logo" onclick="showDashboard()">
+            <button onclick="doLogout()" style="background: rgba(255,255,255,0.8); border: 1px solid rgba(27,54,93,0.1); padding: 8px 16px; border-radius: 100px; font-weight: 700; color: var(--primary); font-size: 0.85rem; cursor: pointer; display: flex; align-items: center; gap: 6px;">
+                <iconify-icon icon="solar:logout-3-bold-duotone" style="font-size: 1.1rem;"></iconify-icon>
+                Sair
+            </button>
+        </div>
+    </header>
+    <div class="dashboard-main" id="detail-content"></div>
+</div>
+
+<!-- INFO MODAL -->
+<div id="modal-overlay" style="display: none; position: fixed; inset: 0; background: rgba(255,255,255,0.05); backdrop-filter: blur(4px); z-index: 2000; align-items: center; justify-content: center; padding: 20px;" onclick="if(event.target===this)closeModal()">
+    <div class="glass" style="width: 100%; max-width: 650px; border-radius: var(--radius-lg); padding: 48px; position: relative; max-height: 85vh; overflow-y: auto; background: rgba(255,255,255,0.95); box-shadow: 0 20px 50px rgba(0,0,0,0.15); border: 1px solid white;">
+        <iconify-icon icon="solar:close-circle-bold-duotone" onclick="closeModal()" style="position: absolute; top: 24px; right: 24px; font-size: 2.2rem; cursor: pointer; color: var(--primary); opacity: 0.5; transition: opacity 0.2s;"></iconify-icon>
+        <h3 id="modal-title" style="font-family: var(--font-display); font-size: 1.85rem; font-weight: 800; color: var(--primary); margin-bottom: 24px;"></h3>
+        <div id="modal-body" style="font-size: 1rem; color: var(--text-main); line-height: 1.8;"></div>
+    </div>
+</div>
+
+<script src="data_movs.js"></script>
+<script src="data_movs_extra.js"></script>
+<script src="data_movs_extra2.js"></script>
+<script>
+const PROCESSOS = [
+  {
+    id:"1025516-82.2021.8.26.0482",
+    acao:"Ação de Reparação de Danos",
+    status:"Fase Pericial",badgeClass:"badge-pericial",
+    resumo:"Ação de indenização por erro médico (osteotomia + tenoplastia no pé esquerdo). Autora alega perda de movimento e atrofia do pé após cirurgias realizadas pelo Dr. Assírio. Processo saneado, aguardando resposta do IMESC sobre esclarecimentos do laudo pericial (prazo de 60 dias concedido em 10/12/2025). Perito do IMESC já designado.",
+    inicial:"<h4>Fatos Alegados pela Autora</h4><ul><li>Rosinete Rosa da Silva trabalhava como faxineira.</li><li>Em 23/12/2016, consultou o Dr. Assírio Barbosa Machado, que indicou cirurgia de osteotomia + tenoplastia no pé esquerdo, realizada em 26/12/2016.</li><li>Alega que foram colocados placas e parafusos sem que fosse informada.</li><li>Retomou trabalho, mas com dores persistentes retornou ao médico, sendo submetida a nova cirurgia em 07/06/2016.</li><li>Perdeu o movimento do pé esquerdo, que ficou atrofiado, tornando-se inapta para atividades habituais e desligou-se do emprego.</li></ul><h4>Pedidos</h4><ul><li>R$ 624.360,00 em danos morais e estéticos</li><li>R$ 459.360,00 em pensão vitalícia por invalidez permanente (até expectativa de vida de 80,1 anos)</li><li>R$ 55.000,00 em dano estético (pé atrofiado com cicatriz)</li><li>Inversão do ônus da prova</li></ul>",
+    defesa:"<h4>Tese de Defesa da São Lucas e Dr. Assírio</h4><ul><li><strong>Omissão de problemas preexistentes:</strong> A autora já padecia de problemas no pé, lesão articular, quadro degenerativo e inflamatório (artrose), tendo sido tratada por vários profissionais anteriormente, inclusive no Hospital Regional.</li><li><strong>Comorbidades:</strong> Autora possui Síndrome do Túnel do Carpo bilateral e outras comorbidades neurológicas e ortopédicas.</li><li><strong>Indicação cirúrgica correta:</strong> A artrodese foi adequada ao quadro médico, com fixação articular para estabilização, seguindo protocolos e literatura médica.</li><li><strong>Consentimento informado:</strong> A autora foi devidamente informada e consentiu, inclusive assinando solicitação junto à Unimed.</li><li><strong>Exame descarta lesão nervosa:</strong> Eletroneuromiografia conclui que membros inferiores estão 'sem anormalidades neuromusculares'.</li><li><strong>Ausência de nexo causal:</strong> Eventuais sequelas decorrem do processo degenerativo preexistente e irreversível (artrose), não do ato cirúrgico.</li><li><strong>Obrigação de meio:</strong> Obrigação médica é de meio, não de resultado.</li><li><strong>Valores absurdos:</strong> Os valores pleiteados configurariam enriquecimento sem causa. Autora não comprovou incapacidade laborativa nem juntou documentos de rescisão.</li></ul>"
+  },
+  {
+    id:"1003810-38.2024.8.26.0482",
+    acao:"Ação de Reparação de Danos",
+    status:"Fase Pericial",badgeClass:"badge-pericial",
+    resumo:"Ação por erro médico — autora alega quebra de 3 dentes durante cirurgia nas cordas vocais realizada pelo Dr. Vinícius nas instalações da São Lucas. Ofício ao IMESC expedido em 01/12/2025 para perícia médica. Aguardando designação de data. Prazo suspenso até 18/05/2026.",
+    inicial:"<h4>Fatos Alegados pela Autora</h4><ul><li>Mariza Aparecida Gois Contre agendou consulta com o Dr. Vinícius Castilho pelo convênio Interplan por cisto nas cordas vocais e rouquidão.</li><li>Cirurgia realizada em 09/03/2022 nas dependências da São Lucas.</li><li>Em 08/10/2022, segunda cirurgia, na qual teve 3 dentes quebrados durante o procedimento.</li><li>O médico se propôs a devolver valores e assegurar tratamento dentário.</li><li>Alega negligência e imperícia, limitações profissionais, sociais e familiares — ficou sem dentes da frente, impossibilitada de sorrir e conversar normalmente por mais de um ano.</li></ul><h4>Pedidos</h4><ul><li>Condenação solidária de todos os réus</li><li>Danos materiais e morais</li><li>Pagamento de tratamento dentário</li><li>Pensão até a convalescença</li><li>Valor total: R$ 96.724,00</li><li>Inversão do ônus da prova e aplicação do CDC</li></ul>",
+    defesa:"<h4>Tese de Defesa da São Lucas</h4><ul><li><strong>Ausência de vínculo com o médico:</strong> Dr. Vinícius não é sócio, acionista, funcionário, nem possui consultório nas dependências do hospital. O hospital atua em regime de 'pensionato', apenas cedendo instalações.</li><li><strong>Nenhuma falha hospitalar apontada:</strong> A autora em nenhum momento discorreu sobre qual seria a participação do hospital ou falha na prestação de serviços. A única emunção é que esteve nas dependências em 09/03/2022.</li><li><strong>Inexistência de solidariedade:</strong> A solidariedade não se presume (STJ). Sem vínculo médico-hospital, não pode haver condenação solidária.</li><li><strong>Culpa exclusiva da vítima:</strong> Os problemas dentários decorrem do estado precário preexistente dos dentes. A intubação transoral é procedimento padrão, impossível prever fragilidade da dentição. Configurada culpa exclusiva.</li><li><strong>Êxito do tratamento principal:</strong> A cirurgia de retirada do cisto obteve êxito total. Autora confirmou em WhatsApp a recuperação da voz.</li><li><strong>Conduta solidária ≠ confissão:</strong> O médico indicou especialista e concordou em custear tratamento por sensibilidade, jamais por assunção de culpa.</li><li><strong>Termo de Consentimento assinado:</strong> Autora assinou termo declarando ciência dos riscos.</li><li><strong>Breve permanência sem intercorrências:</strong> Permaneceu das 7h40 às 19h do dia 09/03/2022, sem registro de intercorrência.</li></ul>"
+  },
+  {
+    id:"1001334-28.2023.8.26.0493",
+    acao:"Ação de Reparação de Danos",
+    status:"Extinto",badgeClass:"badge-extinto",
+    resumo:"Processo EXTINTO SEM RESOLUÇÃO DO MÉRITO em 27/02/2026. Fundamento: art. 485, incisos I e IV do CPC (falta de pressuposto processual — autora não recolheu custas após indeferimento da justiça gratuita). RESULTADO FAVORÁVEL para a São Lucas. Aguardando trânsito em julgado para arquivamento definitivo.",
+    inicial:"<h4>Fatos Alegados pela Autora</h4><ul><li>Maria Isabel dos Santos Pinheiro moveu ação de reparação de danos por erro médico referente ao paciente Jurandir (falecido).</li><li>Valor da causa: R$ 1.126.160,00</li><li>Alegava erro médico nas dependências da São Lucas.</li></ul><h4>Pedidos</h4><ul><li>Indenização por danos materiais e morais no valor de R$ 1.126.160,00</li></ul>",
+    defesa:"<h4>Resultado</h4><p>Processo extinto sem resolução do mérito antes da apresentação de contestação. A autora não recolheu as custas processuais após o indeferimento da justiça gratuita, configurando falta de pressuposto processual. O juiz MARCEL PANGONI GUERRA indeferiu a petição inicial com fundamento nos artigos 485, incisos I e IV do CPC.</p><p><strong>Resultado favorável — processo encerrado sem análise de mérito.</strong></p>"
+  },
+  {
+    id:"1008583-29.2024.8.26.0482",
+    acao:"Ação de Reparação de Danos",
+    status:"Aguardando Manifestação",badgeClass:"badge-andamento",
+    resumo:"Ação de indenização por infecção hospitalar (Pseudomonas aeruginosa) após cirurgia plástica. Laudo pericial de fls. 1323/1336 juntado. Ciência às partes com prazo de 15 dias para manifestação e apresentação de pareceres de assistentes técnicos. Processo em segredo de justiça. Perita: Geovana Peluso Bucchi Banheti.",
+    inicial:"<h4>Fatos Alegados pela Autora</h4><ul><li>Neuza Aparecida Gibim (53 anos) realizou cirurgia plástica combinada de mastopexia com explante de prótese e abdominoplastia nas dependências da São Lucas em 31/03/2023, com o Dr. Eduardo Perseu de Paiva.</li><li>Alta em 01/04/2023. Em 03/04/2023 apresentou febre, dores e inchaço na perna esquerda — médico considerou sintomas normais.</li><li>Em 14/04/2023, diagnosticada com TVP (Trombose Venosa Profunda) pelo Dr. Mário Viotti.</li><li>Em 22/04/2023, internada na Santa Casa para drenagem na região supra púbica com extração de pus.</li><li>Em 24/04/2023, laudo confirmou infecção por Pseudomonas aeruginosa.</li><li>Tratamento com medicação intravenosa via home care por 15 dias. Desenvolveu colite ulcerativa pelo uso prolongado de antibióticos.</li><li>Alega que o hospital não atendia requisitos sanitários adequados.</li></ul><h4>Pedidos</h4><ul><li>Dano material: R$ 27.456,00</li><li>Dano moral: R$ 50.000,00</li><li>Total: R$ 77.456,90</li><li>Inversão do ônus da prova e aplicação do CDC</li></ul>",
+    defesa:"<h4>Tese de Defesa da São Lucas</h4><ul><li><strong>Ausência de vínculo com o cirurgião:</strong> O Dr. Eduardo Perseu não é funcionário, sócio ou membro do corpo clínico. Apenas alugava o centro cirúrgico, atuando de forma autônoma.</li><li><strong>Curtíssima internação:</strong> Paciente permaneceu apenas 31 horas e 42 minutos (entrada 31/03 às 06h08, alta 01/04 às 13h50), período insuficiente para contrair Pseudomonas aeruginosa. Alta sem intercorrências.</li><li><strong>Ausência da bactéria nas instalações:</strong> Nenhum registro de Pseudomonas aeruginosa conforme Vigilância Sanitária e CCIH, 6 meses antes e 6 meses após a cirurgia. Hospital com Licença Sanitária válida.</li><li><strong>CCIH ativa e índices baixíssimos:</strong> Comissão de Controle de Infecção Hospitalar ativa, com índices conforme padrões da OMS. Laudos e certificados comprobatórios.</li><li><strong>Fontes alternativas de contaminação:</strong> Bactéria oportunista presente em diversos ambientes. Autora teve contato com múltiplos serviços de saúde após alta. Marido é médico e transita em ambientes hospitalares. Pai faleceu de septicemia em 28/12/2022, podendo ter sido portador.</li><li><strong>Parecer do infectologista Dr. Rodrigo Sala Ferro:</strong> Concluiu que a infecção não se originou nas dependências do hospital. TVP pode favorecer colonização bacteriana.</li><li><strong>TVP como verdadeira causa das sequelas:</strong> As dores nas pernas e impossibilidade de trabalhar decorrem da TVP, complicação comum em cirurgias plásticas, sem relação com infecção hospitalar.</li><li><strong>Danos materiais imprecisos:</strong> Despesas incluem medicamentos de uso contínuo anteriores à cirurgia (Rivotril, Revoc) e recibos genéricos sem comprovação.</li></ul>"
+  },
+  {
+    id:"1010052-13.2024.8.26.0482",
+    acao:"Ação de Reparação de Danos",
+    status:"Fase Pericial",badgeClass:"badge-pericial",
+    resumo:"Ação de indenização por suposto erro diagnóstico — autora alega que Dr. Damião não diagnosticou fratura no pé direito. IMESC sendo cobrado para agendamento de perícia (múltiplos despachos). Último ofício ao IMESC expedido em 27/02/2026. Agravo de instrumento sobre justiça gratuita foi negado — será alegado em sentença.",
+    inicial:"<h4>Fatos Alegados pela Autora</h4><ul><li>Juliana Aparecida Ramos Ferreira sofreu acidente doméstico (queda de escada) em 11/09/2022, batendo o pé direito com força.</li><li>Em 19/09/2022, procurou o Hospital Iamada — RX não apontou fratura, orientada a tratamento medicamentoso.</li><li>Em 05/10/2022, procurou a São Lucas onde foi atendida pelo Dr. Damião Antônio Grande Lorente — novo RX também não apontou fratura, orientada a tratamento conservador.</li><li>Em 25/11/2022, procurou Dr. Gabriel Quialheiro que solicitou ressonância magnética, constatando fragmento ósseo e indicando cirurgia.</li><li>Operada em Londrina/PR (artrodese do 2º pododáctilo direito) pelo Dr. Ricardo Tsuge.</li><li>Sem melhora, retornou ao Dr. Gabriel que informou necessidade de nova cirurgia pela demora no tratamento.</li><li>Alega negligência e imperícia do Dr. Damião no diagnóstico.</li></ul><h4>Pedidos</h4><ul><li>R$ 104.350,00 em danos materiais (auto escola, despachante, laudo PCD, veículo adaptado, assessoria PCD)</li><li>R$ 60.000,00 em danos morais</li><li>Total: R$ 164.350,00</li><li>Inversão do ônus da prova e aplicação do CDC</li></ul>",
+    defesa:"<h4>Tese de Defesa do Dr. Damião e São Lucas</h4><ul><li><strong>Atendimento único e adequado:</strong> O médico atendeu a autora uma única vez (05/10/2022). O RX solicitado não mostrou fratura, assim como o RX do Hospital Iamada dias antes. Seguiu protocolo médico correto.</li><li><strong>Abandono do tratamento pela autora:</strong> Jamais retornou ao médico réu para acompanhamento. Só procurou outro médico mais de 50 dias depois, tolhendo a possibilidade de nova linha diagnóstica.</li><li><strong>Causa dos danos é o acidente:</strong> Os problemas decorrem diretamente da lesão na queda em casa, não do atendimento.</li><li><strong>Confusão e omissões na inicial:</strong> Autora confunde datas, omite informações sobre tratamentos com outros médicos, não junta prontuários nem documentos da cirurgia em Londrina.</li><li><strong>Protocolo técnico seguido:</strong> RX e tratamento conservador em conformidade com protocolos médicos para fraturas dos dedos do pé.</li><li><strong>Revogação da justiça gratuita:</strong> Autora é empresária com CNPJ ativo, marido com dupla renda (Unesp + Secretaria Estadual), renda familiar de ~10 salários mínimos. Inflou gastos na declaração.</li><li><strong>Hospital sem falha:</strong> Nenhuma falha nos serviços hospitalares sequer mencionada na inicial.</li></ul>"
+  },
+  {
+    id:"0843235-34.2024.8.12.0001",
+    acao:"Ação Indenizatória",
+    status:"Réplica Juntada",badgeClass:"badge-instrucao",
+    resumo:"Ação indenizatória movida por Helena Chulli Vieira em Campo Grande/MS. Audiência de conciliação realizada em 25/11/2024 sem acordo. Contestação apresentada em 10/12/2025. Réplica juntada pela autora em 24/02/2026. Aguardando próxima fase processual (possivelmente saneamento ou especificação de provas).",
+    inicial:"<h4>Fatos Alegados pela Autora</h4><ul><li>Helena Chulli Vieira procurou o Dr. Fabio Bongiovani (falecido) para cirurgia plástica de mastopexia (redução e remodelação das mamas) em Nova Andradina/MS.</li><li>Cirurgia realizada em 10/12/2019 nas dependências da São Lucas, com alta em 11/12/2019.</li><li>No pós-operatório, desenvolveu necrose tecidual no seio esquerdo, com perda da aréola e mamilo.</li><li>Alega negligência e imperícia do médico no pós-operatório.</li><li>Invoca responsabilidade solidária do hospital com o médico.</li></ul><h4>Pedidos</h4><ul><li>Danos materiais: R$ 30.450,34</li><li>Danos morais: R$ 50.000,00</li><li>Total: R$ 80.450,34</li><li>Inversão do ônus da prova e aplicação do CDC</li></ul>",
+    defesa:"<h4>Tese de Defesa da São Lucas</h4><ul><li><strong>Sem vínculo com o cirurgião:</strong> Dr. Fabio Bongiovani (falecido em 21/03/2021) jamais foi sócio, funcionário, membro do corpo clínico ou possuiu consultório nas dependências do hospital. O hospital opera em regime de pensionato (cessão de instalações).</li><li><strong>Autora não aponta falha hospitalar:</strong> Em toda a inicial, não cita qual seria a participação do hospital em suas queixas. Não aponta falha nos serviços de internação, enfermagem, equipamentos ou instalações.</li><li><strong>Cirurgia exitosa, complicação inerente:</strong> A mastopexia foi realizada com técnica aprovada pela SBCP. A necrose da aréola/mamilo é complicação possível e inerente ao procedimento, decorrente de fatores biológicos fora do controle do cirurgião, especialmente em casos de grande volume mamário.</li><li><strong>TCLE assinado pela acompanhante:</strong> Termo de Consentimento assinado pela mãe da autora, sem impedimento legal. Responsabilidade pela coleta do TCLE é do cirurgião, não do hospital.</li><li><strong>Prontuário sem intercorrências:</strong> Internação de 10 a 11/12/2019 sem registro de falha ou intercorrência nos serviços hospitalares (fato incontroverso).</li><li><strong>Pós-operatório comprova diligência do médico:</strong> Conversas de WhatsApp (anexadas pela própria autora) demonstram acompanhamento constante do médico por mais de 5 meses, afastando alegação de negligência.</li><li><strong>Jurisprudência STJ:</strong> Responsabilidade hospitalar limita-se a serviços próprios (estadia, instalações, enfermagem). Sem vínculo de subordinação, não há solidariedade (AgInt no AREsp 2455889/SP).</li></ul>"
+  },
+  {
+    id:"1016045-03.2025.8.26.0482",
+    acao:"Ação de Reparação de Danos",
+    status:"Fase Pericial",badgeClass:"badge-pericial",
+    resumo:"Ação por suposto erro médico — cirurgião operou o joelho DIREITO ao invés do ESQUERDO (e depois corrigiu operando o esquerdo também). Contestação apresentada em 02/09/2025. Réplica juntada em 20/09/2025. Quesitos e assistente técnico (Arnaldo Teixeira Ribeiro) apresentados em 21/03/2026 (petição juntada em 24/03/2026). Possibilidade de acordo entre as partes.",
+    inicial:"<h4>Fatos Alegados pela Autora</h4><ul><li>Rosilene Gomes da Silva Padilha consultou o Dr. Sinval Rocha Soares Nogueira para tratamento de dor e inchaço no joelho esquerdo.</li><li>Exame de imagem realizado no Instituto de Radiologia de Presidente Prudente.</li><li>O médico realizou artroscopia no joelho DIREITO ao invés do ESQUERDO, e de imediato corrigiu operando também o joelho esquerdo.</li><li>Alega nunca ter tido queixas no joelho direito.</li><li>Passou a ter dores e limitações em razão do procedimento equivocado.</li></ul><h4>Pedidos</h4><ul><li>R$ 180.000,00 em danos morais (solidariamente)</li><li>R$ 20.000,00 em dano estético</li><li>Total: R$ 200.000,00</li><li>Inversão do ônus da prova e aplicação do CDC</li></ul>",
+    defesa:"<h4>Tese de Defesa da São Lucas</h4><ul><li><strong>Ilegitimidade passiva:</strong> A São Lucas não pode ser responsabilizada por atos do médico cirurgião autônomo (Dr. Sinval) que apenas utilizou suas instalações. O médico não é sócio, funcionário nem membro do corpo clínico.</li><li><strong>Limite da responsabilidade hospitalar:</strong> Hospitais respondem apenas por serviços próprios (enfermagem, hotelaria, assepsia, equipamentos), não por condutas médicas independentes.</li><li><strong>Prontuário comprova diligência da enfermagem:</strong> A equipe da São Lucas registrou e marcou corretamente o joelho esquerdo — fato reconhecido pela própria autora na inicial.</li><li><strong>Erro de terceiros:</strong> O equívoco partiu do laudo radiológico do Instituto de Radiologia (sem vínculo com a São Lucas) e da conduta do médico.</li><li><strong>Ausência de solidariedade:</strong> Solidariedade não se presume. Sem vínculo empregatício entre médico e hospital.</li><li><strong>Própria autora reconhece:</strong> Todos os serviços da São Lucas foram corretos e adequados.</li><li>Jurisprudência do STJ (AgInt no AREsp 2075178) afastando responsabilidade quando falha é restrita ao médico sem vínculo.</li></ul>"
+  },
+  {
+    id:"0807006-30.2015.8.12.0021",
+    acao:"Ação de Reparação de Danos",
+    status:"Fase Pericial",badgeClass:"badge-pericial",
+    resumo:"Processo de reparação de danos por erro médico (serviços de saúde) em Três Lagoas/MS. Autora original (Janeth) faleceu, substituída pelos herdeiros. Denunciação da lide à Argo Seguros. Múltiplas substituições de perito desde 2020. Perito atual: Brunno Rosique Lara (nomeado mar/2025). Em 20/03/2026, intimação para depósito dos honorários periciais em 10 dias (publicado 24/03/2026).",
+    inicial:"<h4>Fatos Alegados pela Autora</h4><ul><li>Janeth Okiuto Klein (falecida, substituída pelos herdeiros Samyra, Fernando e Wesley) procurou o Dr. Fabio Luiz Bongiovani para cirurgia plástica de abdominoplastia.</li><li>Cirurgia realizada em 19/07/2014 nas dependências da São Lucas, com alta em 20/07/2014.</li><li>Após 3 meses, constatou flacidez, assimetria e diferença entre lado esquerdo e direito do abdômen.</li><li>Alega que cirurgia plástica é obrigação de resultado, não de meio.</li><li>Invoca responsabilidade solidária do hospital.</li></ul><h4>Pedidos</h4><ul><li>R$ 6.900,00 em danos materiais (honorários médicos)</li><li>R$ 15.000,00 em danos morais</li><li>R$ 15.000,00 em danos estéticos</li><li>Total: R$ 36.900,00</li></ul>",
+    defesa:"<h4>Tese de Defesa da São Lucas</h4><ul><li><strong>Ilegitimidade passiva:</strong> O Dr. Fabio Bongiovani NÃO integra o corpo clínico do hospital, não é sócio nem mantém relação de emprego. Apenas utiliza as dependências para procedimentos cirúrgicos em seus pacientes.</li><li><strong>Autora não questiona serviços do hospital:</strong> Em nenhum momento alegou falha nas instalações, equipamentos, medicamentos ou serviços auxiliares fornecidos pelo hospital.</li><li><strong>Sem vínculo de subordinação:</strong> Para responsabilidade solidária, seria necessário vínculo de subordinação/preposição entre médico e hospital, que inexiste.</li><li><strong>Prontuário sem intercorrências:</strong> Cirurgia das 8h30 às 11h de 19/07/2014, alta em 20/07/2014, sem registro de intercorrências.</li><li><strong>Insatisfação pessoal:</strong> Resultado decorre do ganho de peso e envelhecimento natural, não de imperícia médica. A abdominoplastia melhora o contorno corporal mas exige manutenção com exercícios e alimentação.</li><li><strong>Jurisprudência favorável:</strong> TJPR, TJSP e STJ reconhecem ilegitimidade passiva de hospitais quando médico não integra quadro clínico (AgInstr 1030315-6 TJPR; AC 12.899 TJ 5ª CC).</li></ul>"
+  },
+  {
+    id:"0082119-56.2013.8.19.0002",
+    acao:"Ação de Indenização c.c Danos Morais",
+    status:"Laudo Homologado",badgeClass:"badge-andamento",
+    resumo:"Ação de indenização por erro médico (cirurgia bariátrica) em Niterói/RJ. Sentença de 1ª instância julgou IMPROCEDENTE. Autora apelou, foram apresentadas contrarrazões. Houve nulidade na intimação do laudo pericial (fase recursal), reconhecida pelo juízo. Nova manifestação apresentada em 19/11/2025. Laudo pericial homologado em 22/03/2026.",
+    inicial:"<h4>Fatos Alegados pela Autora</h4><ul><li>Valdileia Maciel da Silva realizou cirurgia bariátrica (gastroplastia redutora) no Centro de Fraturas e Ortopedia São Lucas, realizada pelo Dr. Marcello Henrique Cyrino Guilmar.</li><li>Alega complicações pós-operatórias e sequelas decorrentes do procedimento cirúrgico.</li><li>Sustenta erro médico e responsabilidade solidária do hospital.</li><li>Invoca teoria da responsabilidade objetiva do estabelecimento de saúde (CDC art. 14).</li></ul><h4>Pedidos</h4><ul><li>Indenização por danos morais: R$ 15.000,00</li><li>Reparação por danos materiais</li></ul>",
+    defesa:"<h4>Tese de Defesa da São Lucas</h4><ul><li><strong>Ilegitimidade passiva:</strong> A São Lucas é centro ortopédico — não realiza cirurgias bariátricas e não possui estrutura para tal procedimento. O Dr. Marcello Henrique Cyrino Guilmar NÃO integra o corpo clínico do hospital.</li><li><strong>Ausência de vínculo:</strong> Não há relação de emprego, preposição ou subordinação entre o médico cirurgião e o hospital. O profissional apenas utilizou as instalações de forma autônoma.</li><li><strong>Sem participação no procedimento:</strong> O hospital não participou da indicação, planejamento ou execução da cirurgia bariátrica.</li><li><strong>Sentença de 1ª instância IMPROCEDENTE:</strong> O juízo de primeiro grau julgou improcedentes os pedidos da autora.</li><li><strong>Contrarrazões de apelação:</strong> Foram apresentadas contrarrazões sustentando a manutenção integral da sentença de improcedência.</li><li><strong>Laudo pericial homologado:</strong> Em 22/03/2026, o juízo homologou o laudo pericial por seus próprios fundamentos (arts. 370 e 371 do CPC).</li></ul>"
+  }
+];
+
+// ==================== ESAJ DATA MOCK ====================
+// (Injected manually to ensure reliability in demo)
+const CAPAS_EXTRA = {
+  '1025516-82.2021.8.26.0482':{classe:'Procedimento Comum Cível',assunto:'Erro Médico',foro:'Pres. Prudente',vara:'5ª Vara Cível',juiz:'Sérgio Elorza Barbosa de Moraes',distribuicao:'10/12/2021',area:'Cível',valor:'1.138.720,00',tags:'',parte_ativa:'Rosinete Rosa da Silva',adv_ativa:'Defensoria Pública',parte_passiva:'Centro de Fraturas e Ortopedia São Lucas S/S Ltda',adv_passiva:'Vidal Ribeiro Ponçano'},
+  '1003810-38.2024.8.26.0482':{classe:'Procedimento Comum Cível',assunto:'Erro Médico',foro:'Pres. Prudente',vara:'2ª Vara Cível',juiz:'Silas Silva Santos',distribuicao:'01/03/2024',area:'Cível',valor:'96.724,00',tags:'',parte_ativa:'Mariza Aparecida Gois Contre',adv_ativa:'José Aparecido de Oliveira',parte_passiva:'Centro de Fraturas e Ortopedia São Lucas S/S Ltda',adv_passiva:'Vidal Ribeiro Ponçano'},
+  '1001334-28.2023.8.26.0493':{classe:'Procedimento Comum Cível',assunto:'Erro Médico',foro:'Pres. Prudente',vara:'1ª Vara Cível',juiz:'Luiz Augusto Esteves de Mello',distribuicao:'12/05/2023',area:'Cível',valor:'1.126.160,00',tags:'',parte_ativa:'Maria Isabel dos Santos Pinheiro',adv_ativa:'',parte_passiva:'Centro de Fraturas e Ortopedia São Lucas S/S Ltda',adv_passiva:'Vidal Ribeiro Ponçano'},
+  '1008583-29.2024.8.26.0482':{classe:'Procedimento Comum Cível',assunto:'Erro Médico',foro:'Pres. Prudente',vara:'3ª Vara Cível',juiz:'Paulo Gimenes Alonso',distribuicao:'15/07/2024',area:'Cível',valor:'77.456,90',tags:'Segredo de Justiça',parte_ativa:'Neuza Aparecida Gibim',adv_ativa:'Dr. Eduardo Perseu de Paiva',parte_passiva:'Centro de Fraturas e Ortopedia São Lucas S/S Ltda',adv_passiva:'Vidal Ribeiro Ponçano'},
+  '1010052-13.2024.8.26.0482':{classe:'Procedimento Comum Cível',assunto:'Erro Médico',foro:'Pres. Prudente',vara:'4ª Vara Cível',juiz:'Márcio Rogério Alves',distribuicao:'20/08/2024',area:'Cível',valor:'164.350,00',tags:'',parte_ativa:'Juliana Aparecida Ramos Ferreira',adv_ativa:'',parte_passiva:'Centro de Fraturas e Ortopedia São Lucas S/S Ltda',adv_passiva:'Vidal Ribeiro Ponçano'},
+  '0843235-34.2024.8.12.0001':{classe:'Procedimento Comum Cível',assunto:'Serviços de Saúde',foro:'Campo Grande/MS',vara:'11ª Vara Cível',juiz:'Renato Antonio de Liberali',distribuicao:'24/07/2024',area:'Cível',valor:'80.450,34',tags:'Segredo de Justiça',parte_ativa:'Helena Chulli Vieira',adv_ativa:'',parte_passiva:'Centro de Fraturas e Ortopedia São Lucas S/S Ltda',adv_passiva:'Vidal Ribeiro Ponçano'},
+  '1016045-03.2025.8.26.0482':{classe:'Procedimento Comum Cível',assunto:'Erro Médico',foro:'Pres. Prudente',vara:'5ª Vara Cível',juiz:'Sérgio Elorza Barbosa de Moraes',distribuicao:'01/06/2025',area:'Cível',valor:'200.000,00',tags:'',parte_ativa:'Rosilene Gomes da Silva Padilha',adv_ativa:'',parte_passiva:'Centro de Fraturas e Ortopedia São Lucas S/S Ltda',adv_passiva:'Vidal Ribeiro Ponçano'},
+  '0807006-30.2015.8.12.0021':{classe:'Procedimento Comum Cível',assunto:'Serviços de Saúde',foro:'Três Lagoas/MS',vara:'4ª Vara Cível',juiz:'Márcio Rogério Alves',distribuicao:'01/12/2015',area:'Cível',valor:'36.900,00',tags:'',parte_ativa:'Janeth Okiuto Klein (Sucedida)',adv_ativa:'',parte_passiva:'Centro de Fraturas e Ortopedia São Lucas S/S Ltda',adv_passiva:'Vidal Ribeiro Ponçano'},
+  '0082119-56.2013.8.19.0002':{classe:'Procedimento Comum',assunto:'Erro Médico',foro:'Niterói/RJ',vara:'6ª Vara Cível',juiz:'Simone Lopes da Costa',distribuicao:'2013',area:'Cível',valor:'15.000,00',tags:'',parte_ativa:'Valdileia Maciel da Silva',adv_ativa:'',parte_passiva:'Centro de Fraturas e Ortopedia São Lucas',adv_passiva:'Vidal Ribeiro Ponçano'}
+};
+
+function getCapaData(id) { 
+    if(typeof CAPAS_ESAJ !== 'undefined' && CAPAS_ESAJ[id]) return CAPAS_ESAJ[id];
+    return CAPAS_EXTRA[id] || { classe:'N/A', assunto:'N/A', foro:'N/A', vara:'N/A', juiz:'N/A', distribuicao:'N/A', area:'N/A', valor:'0', tags:'' };
+}
+function getMovsData(id) { 
+    if(typeof MOVIMENTACOES_ESAJ !== 'undefined' && MOVIMENTACOES_ESAJ[id]) return MOVIMENTACOES_ESAJ[id];
+    if(typeof MOVIMENTACOES_EXTRA !== 'undefined' && MOVIMENTACOES_EXTRA[id]) return MOVIMENTACOES_EXTRA[id];
+    return [];
+}
+
+// ==================== AUTH ====================
+function doLogin(){
+    const u=document.getElementById('inp-user').value.trim().toLowerCase();
+    const p=document.getElementById('inp-pass').value.trim();
+    if(u==='saolucas' && (p==='sl2026' || p==='SL2026')){
+        sessionStorage.setItem('auth','1');
+        showDashboard();
+    } else {
+        const err=document.getElementById('login-error');
+        err.classList.add('active');
+        setTimeout(()=>err.classList.remove('active'), 3000);
+    }
+}
+function doLogout(){ sessionStorage.removeItem('auth'); showView('login'); }
+
+// ==================== NAV ====================
+function showView(id){
+    document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+    window.scrollTo(0,0);
+}
+function showDashboard(){ showView('dashboard'); renderDashboard(); }
+function showDetail(pid){ showView('detail'); renderDetail(pid); }
+
+// ==================== MODAL ====================
+function openModal(title, html){
+    document.getElementById('modal-title').textContent=title;
+    document.getElementById('modal-body').innerHTML=html;
+    document.getElementById('modal-overlay').style.display='flex';
+    document.body.style.overflow='hidden';
+}
+function closeModal(){
+    document.getElementById('modal-overlay').style.display='none';
+    document.body.style.overflow='';
+}
+
+// ==================== RENDER DASHBOARD ====================
+function renderDashboard(){
+    let totalValor = 0;
+    PROCESSOS.forEach(p => {
+        const c = getCapaData(p.id);
+        totalValor += parseFloat((c.valor || "0").replace(/[R$\s.]/g,'').replace(',','.')) || 0;
+    });
+
+    const periciais = PROCESSOS.filter(p => p.status === 'Fase Pericial').length;
+    const emAndamento = PROCESSOS.filter(p => p.status === 'Réplica Juntada' || p.status === 'Aguardando Manifestação' || p.status === 'Laudo Homologado').length;
+    const extintos = PROCESSOS.filter(p => p.status === 'Extinto').length;
+
+    let html = `
+    <div class="stats-container motion-enter">
+        <div class="stat-card glass navy">
+            <div class="stat-head">
+                <div class="stat-info">
+                    <div class="label">Total de Processos</div>
+                    <div class="stat-val">${PROCESSOS.length}</div>
+                    <div style="font-size: 0.75rem; color: var(--text-muted); opacity: 0.8; margin-top: 4px;">8 ativos</div>
+                </div>
+            </div>
+        </div>
+        <div class="stat-card glass blue">
+            <div class="stat-head">
+                <div class="stat-info">
+                    <div class="label">Valor em Risco</div>
+                    <div class="stat-val" style="font-size: 1.5rem">R$ ${totalValor.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</div>
+                    <div style="font-size: 0.65rem; color: var(--text-muted); opacity: 0.8; margin-top: 4px; text-transform: lowercase;">soma dos valores de causa</div>
+                </div>
+            </div>
+        </div>
+        <div class="stat-card glass green">
+            <div class="stat-head">
+                <div class="stat-info">
+                    <div class="label">Fase Pericial</div>
+                    <div class="stat-val">${periciais}</div>
+                    <div style="font-size: 0.65rem; color: var(--text-muted); opacity: 0.8; margin-top: 4px; text-transform: lowercase;">aguardando perícia</div>
+                </div>
+            </div>
+        </div>
+        <div class="stat-card glass orange">
+            <div class="stat-head">
+                <div class="stat-info">
+                    <div class="label">Em Andamento</div>
+                    <div class="stat-val">${emAndamento}</div>
+                    <div style="font-size: 0.65rem; color: var(--text-muted); opacity: 0.8; margin-top: 4px; text-transform: lowercase;">aguardando providências</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="section-header motion-enter" style="display: flex; align-items: center; gap: 12px; margin-bottom: 24px;">
+        <span style="width: 4px; height: 20px; background: var(--accent); border-radius: 10px; opacity: 0.6;"></span>
+        <h3 style="font-size: 1.5rem; font-weight: 800; color: var(--primary);">Listagem de Processos</h3>
+    </div>
+    
+    <div class="process-list">`;
+    
+    PROCESSOS.forEach((p, i) => {
+        const capa = getCapaData(p.id);
+        const movs = getMovsData(p.id);
+        const lastMov = movs.length > 0 ? movs[0] : null;
+        const movTxt = lastMov ? `${lastMov.data} — ${lastMov.titulo}` : "Sem movimentações cadastradas.";
+
+        html += `
+        <div class="proc-card glass motion-enter" style="animation-delay: ${0.2 + (i*0.1)}s" onclick="showDetail('${p.id}')">
+            <div class="proc-top">
+                <span class="proc-num">${p.id}</span>
+                <span class="badge ${p.badgeClass}">${p.status}</span>
+            </div>
+            <div class="proc-title">${p.acao}</div>
+            
+            <div class="proc-meta-line">
+                <div class="proc-meta-item">
+                    <iconify-icon icon="solar:map-point-bold-duotone"></iconify-icon>
+                    ${capa.foro} — ${capa.vara}
+                </div>
+                <div class="proc-meta-item">
+                    <iconify-icon icon="solar:dollar-minimalistic-bold-duotone"></iconify-icon>
+                    R$ ${capa.valor}
+                </div>
+            </div>
+
+            <div class="proc-tags">
+                <div class="proc-tag"><strong>AUTOR</strong> ${capa.parte_ativa || "N/A"}</div>
+                <div class="proc-tag"><strong>RÉU</strong> ${capa.parte_passiva || "N/A"}</div>
+            </div>
+
+            <div class="proc-footer-mov">
+                ${movTxt}
+            </div>
+        </div>`;
+    });
+
+    html += `</div>`;
+    document.getElementById('dash-content').innerHTML = html;
+}
+
+// ==================== RENDER DETAIL ====================
+function renderDetail(id){
+    const p = PROCESSOS.find(x => x.id === id);
+    if(!p) return;
+    const capa = getCapaData(p.id);
+    const movs = getMovsData(p.id);
+
+    let html = `
+    <div class="back-btn motion-enter" onclick="showDashboard()" style="margin-bottom: 20px;">
+        <iconify-icon icon="solar:alt-arrow-left-bold-duotone"></iconify-icon>
+        Voltar aos Processos
+    </div>
+
+    <!-- MAIN COMPACT HEADER -->
+    <div class="glass motion-enter" style="padding: 24px 32px; border-radius: 20px; margin-bottom: 16px; background: rgba(255, 255, 255, 0.25); border-left: 5px solid var(--primary); display: flex; align-items: center; justify-content: space-between; gap: 20px;">
+        <div style="flex: 1;">
+            <div style="font-size: 0.7rem; font-weight: 800; color: var(--accent); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 4px;">Dossiê Processual</div>
+            <h2 style="font-family: var(--font-display); font-size: 1.85rem; font-weight: 800; color: var(--primary); letter-spacing: -0.03em;">${p.id}</h2>
+            <div style="font-size: 1rem; color: var(--text-main); font-weight: 600; opacity: 0.9;">${p.acao}</div>
+        </div>
+        
+        <div style="display: flex; align-items: center; gap: 12px;">
+            <div class="glass" style="padding: 10px 18px; border-radius: 12px; border-top: 3px solid #f59e0b; cursor: pointer; font-size: 0.75rem; font-weight: 800; color: var(--primary); text-transform: uppercase; display: flex; align-items: center; gap: 6px; transition: transform 0.2s, box-shadow 0.2s;" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 5px 15px rgba(245,158,11,0.2)'" onmouseout="this.style.transform='none'; this.style.boxShadow='none'" onclick="openModal('Andamento', '${p.resumo.replace(/'/g, "\\'").replace(/\n/g, "")}')">
+                <iconify-icon icon="solar:history-bold-duotone"></iconify-icon> Andamento
+            </div>
+            <div class="glass" style="padding: 10px 18px; border-radius: 12px; border-top: 3px solid #3b82f6; cursor: pointer; font-size: 0.75rem; font-weight: 800; color: var(--primary); text-transform: uppercase; display: flex; align-items: center; gap: 6px; transition: transform 0.2s, box-shadow 0.2s;" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 5px 15px rgba(59,130,246,0.2)'" onmouseout="this.style.transform='none'; this.style.boxShadow='none'" onclick="openModal('Alegação', '${p.inicial.replace(/'/g, "\\'").replace(/\n/g, "")}')">
+                <iconify-icon icon="solar:document-text-bold-duotone"></iconify-icon> Alegação
+            </div>
+            <div class="glass" style="padding: 10px 18px; border-radius: 12px; border-top: 3px solid #10b981; cursor: pointer; font-size: 0.75rem; font-weight: 800; color: var(--primary); text-transform: uppercase; display: flex; align-items: center; gap: 6px; transition: transform 0.2s, box-shadow 0.2s;" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 5px 15px rgba(16,185,129,0.2)'" onmouseout="this.style.transform='none'; this.style.boxShadow='none'" onclick="openModal('Defesa', '${p.defesa.replace(/'/g, "\\'").replace(/\n/g, "")}')">
+                <iconify-icon icon="solar:shield-check-bold-duotone"></iconify-icon> Defesa
+            </div>
+            <span class="badge ${p.badgeClass}" style="margin-left: 10px; opacity: 0.8;">${p.status}</span>
+        </div>
+    </div>
+
+    <!-- TWO COLUMN DATA SECTION -->
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
+        
+        <!-- Metadata Compact -->
+        <div class="glass motion-enter" style="padding: 24px; border-radius: 20px;">
+            <h4 style="font-size: 0.9rem; font-weight: 800; color: var(--primary); margin-bottom: 20px; text-transform: uppercase; opacity: 0.8;">Informações de Capa</h4>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                <div><div style="font-size: 0.65rem; font-weight: 800; color: var(--text-muted); opacity: 0.6; text-transform: uppercase;">Classe / Assunto</div><div style="font-weight: 700; color: var(--text-main); font-size: 0.85rem; margin-top: 3px;">${capa.classe} — ${capa.assunto}</div></div>
+                <div><div style="font-size: 0.65rem; font-weight: 800; color: var(--text-muted); opacity: 0.6; text-transform: uppercase;">Valor da Ação</div><div style="font-weight: 800; color: var(--accent); font-size: 1rem; margin-top: 3px;">R$ ${capa.valor || '0,00'}</div></div>
+                <div><div style="font-size: 0.65rem; font-weight: 800; color: var(--text-muted); opacity: 0.6; text-transform: uppercase;">Foro / Vara</div><div style="font-weight: 700; color: var(--text-main); font-size: 0.85rem; margin-top: 3px;">${capa.foro} — ${capa.vara}</div></div>
+                <div><div style="font-size: 0.65rem; font-weight: 800; color: var(--text-muted); opacity: 0.6; text-transform: uppercase;">Distribuição</div><div style="font-weight: 700; color: var(--text-main); font-size: 0.85rem; margin-top: 3px;">${capa.distribuicao || 'N/A'}</div></div>
+                <div><div style="font-size: 0.65rem; font-weight: 800; color: var(--text-muted); opacity: 0.6; text-transform: uppercase;">Juiz Resp.</div><div style="font-weight: 700; color: var(--text-main); font-size: 0.85rem; margin-top: 3px;">${capa.juiz || 'N/A'}</div></div>
+                <div><div style="font-size: 0.65rem; font-weight: 800; color: var(--text-muted); opacity: 0.6; text-transform: uppercase;">Área</div><div style="font-weight: 700; color: var(--text-main); font-size: 0.85rem; margin-top: 3px;">${capa.area}</div></div>
+            </div>
+        </div>
+
+        <!-- Parties Compact -->
+        <div class="glass motion-enter" style="padding: 24px; border-radius: 20px;">
+            <h4 style="font-size: 0.9rem; font-weight: 800; color: var(--primary); margin-bottom: 20px; text-transform: uppercase; opacity: 0.8;">Partes do Processo</h4>
+            <div style="display: flex; flex-direction: column; gap: 12px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(0,0,0,0.03); padding-bottom: 8px;">
+                    <div style="font-weight: 700; font-size: 0.9rem;">${capa.parte_ativa}</div>
+                    <span style="font-size: 0.6rem; font-weight: 900; background: #1b365d; color: white; padding: 2px 8px; border-radius: 4px;">AUTOR</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(0,0,0,0.03); padding-bottom: 8px;">
+                    <div style="font-weight: 700; font-size: 0.9rem;">${capa.parte_passiva}</div>
+                    <span style="font-size: 0.6rem; font-weight: 900; background: #0076a3; color: white; padding: 2px 8px; border-radius: 4px;">RÉU</span>
+                </div>
+                <div style="margin-top: 4px; padding: 10px; background: rgba(0,0,0,0.02); border-radius: 8px; font-size: 0.8rem; color: var(--text-muted);">
+                    <strong>Advogados Atuantes:</strong><br>
+                    ${capa.adv_ativa || '—'} (Autor) | ${capa.adv_passiva || '—'} (Réu)
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- TIMELINE COMPACT -->
+    <div class="glass motion-enter" style="padding: 24px 32px; border-radius: 20px;">
+        <h4 style="font-size: 1rem; font-weight: 800; color: var(--primary); margin-bottom: 20px;">Últimas Movimentações</h4>
+        <div style="display: flex; flex-direction: column; gap: 10px;">
+            ${movs.slice(0, 8).map((m, idx) => `
+                <div style="display: grid; grid-template-columns: 140px 1fr; gap: 20px; padding: 10px 0; border-bottom: 1px solid rgba(0,0,0,0.03); align-items: start;">
+                    <div style="font-size: 0.7rem; font-weight: 800; color: var(--text-muted);">${m.data}</div>
+                    <div>
+                        <div style="font-weight: 700; color: var(--primary); font-size: 0.9rem; margin-bottom: 2px;">${m.titulo}</div>
+                        <p style="font-size: 0.8rem; color: var(--text-main); opacity: 0.7; line-height: 1.4;">${m.desc || ""}</p>
+                    </div>
+                </div>
+            `).join('')}
+        </div>
+        <div style="text-align: right; margin-top: 16px;">
+            <button onclick="showAllMovements('${p.id}')" style="background: transparent; color: var(--accent); border: 2px solid var(--accent); padding: 8px 24px; border-radius: 100px; font-weight: 800; font-size: 0.75rem; cursor: pointer; text-transform: uppercase;">
+                Ver Histórico Completo
+            </button>
+        </div>
+    </div>`;
+
+    document.getElementById('detail-content').innerHTML = html;
+}
+
+function showAllMovements(id) {
+    const movs = getMovsData(id);
+    let html = `
+    <div style="position: relative; padding-left: 24px; border-left: 2px solid rgba(0,0,0,0.05); margin-top: 10px;">
+        ${movs.map((m, idx) => `
+            <div style="position: relative; margin-bottom: 24px;">
+                <span style="position: absolute; left: -31.5px; top: 4px; width: 11px; height: 11px; background: ${idx === 0 ? 'var(--accent)' : '#CBD5E1'}; border: 2px solid white; border-radius: 100px;"></span>
+                <div style="font-size: 0.7rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; margin-bottom: 2px;">${m.data}</div>
+                <div style="font-weight: 700; color: var(--text-main); font-size: 0.95rem; margin-bottom: 2px;">${m.titulo}</div>
+                <p style="font-size: 0.8rem; color: var(--text-muted); line-height: 1.4;">${m.desc || ""}</p>
+            </div>
+        `).join('')}
+    </div>`;
+    openModal('Histórico Completo de Movimentações', html);
+}
+
+// ==================== INIT ====================
+if(sessionStorage.getItem('auth')==='1'){ showDashboard(); } else { showView('login'); }
+</script>
+</body>
+</html>
